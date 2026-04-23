@@ -9,3 +9,4 @@
 !lib/**
 !.gitignore
 !.clang-format
+!compile_shaders.py
