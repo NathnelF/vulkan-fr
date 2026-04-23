@@ -1,0 +1,11 @@
+*
+!CMakeLists.txt
+!notes.md
+!src/
+!src/**
+!include/
+!include/**
+!lib/
+!lib/**
+!.gitignore
+!.clang-format
