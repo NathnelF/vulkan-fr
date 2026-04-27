@@ -7,6 +7,8 @@
 
 #define FRAMES_IN_FLIGHT 3
 
+#define Megabytes(n) ((u64)(n) * 1024 * 1024)
+
 struct FrameContext
 {
     VkSemaphore begin_rendering_semaphore;
@@ -71,9 +73,29 @@ enum PiplineFormat
     PIPELINE_ADDITIVE_PARTICLE,
 };
 
+struct MeshRegion
+{
+    u32 vertex_offset;
+    u32 vertex_count;
+    u32 index_offset;
+    u32 index_count;
+};
+
+#define MAX_MESHES 128
+#define MEGA_BUFFER_SIZE Megabytes(128)
+
+struct MeshData
+{
+    VkBuffer buffer;
+    VmaAllocation allocation;
+    MeshRegion meshes[MAX_MESHES];
+    u32 mesh_count;
+};
+
 struct State
 {
     Context context;
     Swapchain swapchain;
     Pipeline pipelines[20];
+    MeshData mesh_data;
 };

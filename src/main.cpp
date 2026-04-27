@@ -1,6 +1,7 @@
 #include "headers.h"
 
 #include "context.cpp"
+#include "mesh.cpp"
 #include "pipeline.cpp"
 #include "render.cpp"
 #include "swapchain.cpp"
@@ -42,9 +43,7 @@ int main()
     state.pipelines[PIPELINE_BASIC] =
       BuildPipeline(&state, &basic_pipeline_desc);
 
-    RenderContext render_context = {};
-    InitRender(&state, &render_context);
-
+    LoadMeshes(&state);
     int frame_index = 0;
     int running = 1;
     SDL_Event event;
@@ -69,7 +68,7 @@ int main()
             debug("quitting");
             running = 0;
         }
-        Render(&state, &render_context, frame_index);
+        Render(&state, frame_index);
         frame_index = (frame_index + 1) % FRAMES_IN_FLIGHT;
     }
     return 0;
