@@ -11,3 +11,5 @@
 #include "stdlib.h"
 
 #include "cgltf.h"
+
+#include "HandmadeMath.h"

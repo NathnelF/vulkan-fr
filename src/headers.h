@@ -92,10 +92,36 @@ struct MeshData
     u32 mesh_count;
 };
 
+struct CameraConstants
+{
+    HMM_Mat4 mvp;
+};
+
+struct Camera
+{
+    HMM_Vec3 target;
+    float yaw;
+    float pitch;
+    float distance;
+
+    float pan_speed;
+    float zoom_speed;
+    float rotate_speed;
+
+    VkBuffer buffers[FRAMES_IN_FLIGHT];
+    VmaAllocation allocs[FRAMES_IN_FLIGHT];
+    void *ptrs[FRAMES_IN_FLIGHT];
+
+    VkDescriptorPool descriptor_pool;
+    VkDescriptorSetLayout descriptor_layout;
+    VkDescriptorSet descriptor_sets[FRAMES_IN_FLIGHT];
+};
+
 struct State
 {
     Context context;
     Swapchain swapchain;
     Pipeline pipelines[20];
     MeshData mesh_data;
+    Camera camera;
 };

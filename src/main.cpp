@@ -1,5 +1,6 @@
 #include "headers.h"
 
+#include "camera.cpp"
 #include "context.cpp"
 #include "mesh.cpp"
 #include "pipeline.cpp"
@@ -16,6 +17,9 @@ int main()
     InitContext(&state);
     CreateSwapchain(&state, VK_NULL_HANDLE);
 
+    CreateCameraBuffer(&state);
+    CreateCameraDescriptors(&state);
+
     // Load shaders
     VkShaderModule basic_vert = LoadShaderModule(&state, "src/vert.spv");
     VkShaderModule basic_frag = LoadShaderModule(&state, "src/frag.spv");
@@ -25,8 +29,8 @@ int main()
     basic_pipeline_desc.frag = basic_frag;
     VkPipelineLayoutCreateInfo basic_pipeline_layout_desc = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .setLayoutCount = 0,
-        .pSetLayouts = NULL,
+        .setLayoutCount = 1,
+        .pSetLayouts = &state.camera.descriptor_layout,
         .pushConstantRangeCount = 0,
         .pPushConstantRanges = NULL,
     };
@@ -46,9 +50,17 @@ int main()
     LoadMeshes(&state);
     int frame_index = 0;
     int running = 1;
+
+    u64 freq = SDL_GetPerformanceFrequency();
+    u64 last = SDL_GetPerformanceCounter();
+
     SDL_Event event;
     while (running)
     {
+        u64 now = SDL_GetPerformanceCounter();
+        float dt = (float)(now - last) / (float)freq;
+        last = now;
+
         while (SDL_PollEvent(&event))
         {
             if (event.type == SDL_EVENT_QUIT)
@@ -68,6 +80,8 @@ int main()
             debug("quitting");
             running = 0;
         }
+
+        UpdateCamera(&state, dt, frame_index);
         Render(&state, frame_index);
         frame_index = (frame_index + 1) % FRAMES_IN_FLIGHT;
     }
