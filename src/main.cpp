@@ -5,6 +5,7 @@
 #include "mesh.cpp"
 #include "pipeline.cpp"
 #include "render.cpp"
+#include "scene.cpp"
 #include "swapchain.cpp"
 
 int main()
@@ -18,7 +19,7 @@ int main()
     CreateSwapchain(&state, VK_NULL_HANDLE);
 
     CreateCameraBuffer(&state);
-    CreateCameraDescriptors(&state);
+    CreateSceneBuffers(&state);
 
     // Load shaders
     VkShaderModule basic_vert = LoadShaderModule(&state, "src/vert.spv");
@@ -27,12 +28,20 @@ int main()
     PipelineDesc basic_pipeline_desc = DefaultPipelineDesc(&state);
     basic_pipeline_desc.vert = basic_vert;
     basic_pipeline_desc.frag = basic_frag;
+
+    // push constants
+    VkPushConstantRange push = {
+        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+        .offset = 0,
+        .size = sizeof(PushConstants),
+    };
+
     VkPipelineLayoutCreateInfo basic_pipeline_layout_desc = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .setLayoutCount = 1,
-        .pSetLayouts = &state.camera.descriptor_layout,
-        .pushConstantRangeCount = 0,
-        .pPushConstantRanges = NULL,
+        .setLayoutCount = 0,
+        .pSetLayouts = NULL,
+        .pushConstantRangeCount = 1,
+        .pPushConstantRanges = &push,
     };
 
     VkPipelineLayout basic_pipeline_layout;

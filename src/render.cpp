@@ -110,14 +110,16 @@ void Render(State *state, int frame_index)
     vkCmdBindPipeline(
       frame->command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->handle);
 
-    vkCmdBindDescriptorSets(frame->command_buffer,
-                            VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            pipeline->layout,
-                            0,
-                            1,
-                            &state->camera.descriptor_sets[frame_index],
-                            0,
-                            NULL);
+    PushConstants push = {
+        .camera_address = state->camera.camera_buffer_address[frame_index],
+    };
+
+    vkCmdPushConstants(frame->command_buffer,
+                       pipeline->layout,
+                       VK_SHADER_STAGE_VERTEX_BIT,
+                       0,
+                       sizeof(PushConstants),
+                       &push);
 
     VkViewport viewport = {
         .x = 0.0f,

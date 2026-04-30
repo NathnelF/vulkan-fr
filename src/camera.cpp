@@ -6,7 +6,8 @@ void CreateCameraBuffer(State *state)
     VkBufferCreateInfo buffer_info = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .size = sizeof(CameraConstants),
-        .usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+        .usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT |
+                 VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
     };
 
     VmaAllocationCreateInfo alloc_info = {
@@ -27,6 +28,14 @@ void CreateCameraBuffer(State *state)
                  "could not create camera buffer");
 
         state->camera.ptrs[i] = result.pMappedData;
+
+        VkBufferDeviceAddressInfo address_info = {
+            .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+            .buffer = state->camera.buffers[i],
+        };
+
+        state->camera.camera_buffer_address[i] =
+          vkGetBufferDeviceAddress(state->context.device, &address_info);
     }
 
     state->camera.target = { 0.0f, 0.0f, 0.0f };
@@ -38,86 +47,6 @@ void CreateCameraBuffer(State *state)
     state->camera.rotate_speed = 180.0f;
 
     debug("created camera uniform buffers");
-}
-
-void CreateCameraDescriptors(State *state)
-{
-    VkDescriptorSetLayoutBinding binding = {
-        .binding = 0,
-        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .descriptorCount = 1,
-        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-    };
-
-    VkDescriptorSetLayoutCreateInfo layout_info = {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-        .bindingCount = 1,
-        .pBindings = &binding,
-    };
-
-    validate(vkCreateDescriptorSetLayout(state->context.device,
-                                         &layout_info,
-                                         NULL,
-                                         &state->camera.descriptor_layout),
-             "could not create camera descriptor set layout");
-
-    VkDescriptorPoolSize pool_size = {
-        .type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-        .descriptorCount = FRAMES_IN_FLIGHT,
-    };
-
-    VkDescriptorPoolCreateInfo pool_info = {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        .maxSets = FRAMES_IN_FLIGHT,
-        .poolSizeCount = 1,
-        .pPoolSizes = &pool_size,
-    };
-
-    validate(vkCreateDescriptorPool(state->context.device,
-                                    &pool_info,
-                                    NULL,
-                                    &state->camera.descriptor_pool),
-             "could not create camera descriptor pool");
-
-    VkDescriptorSetLayout layouts[FRAMES_IN_FLIGHT];
-    for (int i = 0; i < FRAMES_IN_FLIGHT; i++)
-    {
-        layouts[i] = state->camera.descriptor_layout;
-    }
-
-    VkDescriptorSetAllocateInfo alloc_info = {
-        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        .descriptorPool = state->camera.descriptor_pool,
-        .descriptorSetCount = FRAMES_IN_FLIGHT,
-        .pSetLayouts = layouts,
-    };
-
-    validate(vkAllocateDescriptorSets(state->context.device,
-                                      &alloc_info,
-                                      state->camera.descriptor_sets),
-             "could not allocate camera descriptor sets");
-
-    for (int i = 0; i < FRAMES_IN_FLIGHT; i++)
-    {
-        VkDescriptorBufferInfo buffer_info = {
-            .buffer = state->camera.buffers[i],
-            .offset = 0,
-            .range = sizeof(CameraConstants),
-        };
-
-        VkWriteDescriptorSet write = {
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .dstSet = state->camera.descriptor_sets[i],
-            .dstBinding = 0,
-            .descriptorCount = 1,
-            .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .pBufferInfo = &buffer_info,
-        };
-
-        vkUpdateDescriptorSets(state->context.device, 1, &write, 0, NULL);
-    }
-
-    debug("created camera descriptors");
 }
 
 static HMM_Vec3 CameraGetForward(Camera *cam)
