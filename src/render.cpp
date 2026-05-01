@@ -6,9 +6,12 @@ void Render(State *state, int frame_index)
 {
     FrameContext *frame = &state->context.frame_context[frame_index];
 
-    validate(vkWaitForFences(
-               state->context.device, 1, &frame->fence, VK_TRUE, UINT64_MAX),
-             "wait for fence failed");
+    // validate(vkWaitForFences(
+    //            state->context.device, 1, &frame->fence, VK_TRUE, UINT64_MAX),
+    //          "wait for fence failed");
+
+    // validate(vkResetFences(state->context.device, 1, &frame->fence),
+    //          "reset fence failed");
 
     u32 image_index = 0;
     VkResult acquire = vkAcquireNextImageKHR(state->context.device,
@@ -23,9 +26,6 @@ void Render(State *state, int frame_index)
         RecreateSwapchain(state);
         return;
     }
-
-    validate(vkResetFences(state->context.device, 1, &frame->fence),
-             "reset fence failed");
 
     validate(vkResetCommandPool(state->context.device, frame->command_pool, 0),
              "reset command pool failed");
@@ -112,6 +112,7 @@ void Render(State *state, int frame_index)
 
     PushConstants push = {
         .camera_address = state->camera.camera_buffer_address[frame_index],
+        .scene_address = state->scene.data_addresses[frame_index],
     };
 
     vkCmdPushConstants(frame->command_buffer,
@@ -150,13 +151,19 @@ void Render(State *state, int frame_index)
                          index_offset,
                          VK_INDEX_TYPE_UINT32);
 
-    MeshRegion *mesh = &state->mesh_data.meshes[0];
-    vkCmdDrawIndexed(frame->command_buffer,
-                     mesh->index_count,
-                     1,
-                     mesh->index_offset,
-                     mesh->vertex_offset,
-                     0);
+    // MeshRegion *mesh = &state->mesh_data.meshes[0];
+    // vkCmdDrawIndexed(frame->command_buffer,
+    //                  mesh->index_count,
+    //                  1,
+    //                  mesh->index_offset,
+    //                  mesh->vertex_offset,
+    //                  0);
+
+    vkCmdDrawIndexedIndirect(frame->command_buffer,
+                             state->scene.draw_buffers[frame_index],
+                             0,
+                             state->scene.draw_count,
+                             sizeof(VkDrawIndexedIndirectCommand));
 
     vkCmdEndRendering(frame->command_buffer);
 

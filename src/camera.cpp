@@ -161,7 +161,6 @@ void UpdateCamera(State *state, float dt, int frame_index)
       500.0f);
     proj.Elements[1][1] *= -1.0f;
 
-    HMM_Mat4 model = HMM_M4D(1.0f);
-    CameraConstants c = { HMM_MulM4(proj, HMM_MulM4(view, model)) };
+    CameraConstants c = { HMM_MulM4(proj, view) };
     memcpy(state->camera.ptrs[frame_index], &c, sizeof(CameraConstants));
 }

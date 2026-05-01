@@ -74,6 +74,7 @@ void SelectGPU(State *state, vkb_handles *handles)
 {
     vkb::PhysicalDeviceSelector gpu_picker(handles->instance);
     VkPhysicalDeviceFeatures core_features = {
+        .multiDrawIndirect = true,
         .samplerAnisotropy = true,
     };
     auto result = gpu_picker.set_surface(state->context.surface)

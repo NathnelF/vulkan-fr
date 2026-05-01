@@ -20,6 +20,8 @@ int main()
 
     CreateCameraBuffer(&state);
     CreateSceneBuffers(&state);
+    CreateStaticScene(&state);
+    LoadMeshes(&state);
 
     // Load shaders
     VkShaderModule basic_vert = LoadShaderModule(&state, "src/vert.spv");
@@ -56,7 +58,6 @@ int main()
     state.pipelines[PIPELINE_BASIC] =
       BuildPipeline(&state, &basic_pipeline_desc);
 
-    LoadMeshes(&state);
     int frame_index = 0;
     int running = 1;
 
@@ -90,7 +91,17 @@ int main()
             running = 0;
         }
 
+        FrameContext *frame = &state.context.frame_context[frame_index];
+
+        validate(vkWaitForFences(
+                   state.context.device, 1, &frame->fence, VK_TRUE, UINT64_MAX),
+                 "wait for fence failed");
+
+        validate(vkResetFences(state.context.device, 1, &frame->fence),
+                 "reset fence failed");
+
         UpdateCamera(&state, dt, frame_index);
+        UpdateScene(&state, frame_index);
         Render(&state, frame_index);
         frame_index = (frame_index + 1) % FRAMES_IN_FLIGHT;
     }

@@ -94,12 +94,13 @@ struct MeshData
 
 struct CameraConstants
 {
-    HMM_Mat4 mvp;
+    HMM_Mat4 view_proj;
 };
 
 struct PushConstants
 {
     VkDeviceAddress camera_address;
+    VkDeviceAddress scene_address;
 };
 
 struct Camera
@@ -119,7 +120,24 @@ struct Camera
     VkDeviceAddress camera_buffer_address[FRAMES_IN_FLIGHT];
 };
 
-struct Instance
+#define MAX_ENTITIES 1024
+#define MAX_DRAWS 1024
+
+// CPU side data
+
+// Shared GPU data
+
+struct SceneData
+{
+    HMM_Vec3 positions[MAX_ENTITIES];
+    HMM_Vec3 scales[MAX_ENTITIES];
+    float rotations[MAX_ENTITIES];
+    HMM_Mat4 transforms[MAX_ENTITIES];
+    u32 mesh_indices[MAX_ENTITIES];
+    u32 texture_indices[MAX_ENTITIES];
+};
+
+struct GpuData
 {
     HMM_Mat4 transform;
     u32 mesh_index;
@@ -127,26 +145,24 @@ struct Instance
     float padding[2];
 };
 
-#define MAX_INSTANCES 1024
-#define MAX_DRAWS 1024
-
 struct Scene
 {
-    Instance instances[MAX_INSTANCES];
-    u32 instance_count;
+    GpuData gpu_data;
+    SceneData scene_data;
+    u32 entity_count;
 
-    VkBuffer instance_buffers[FRAMES_IN_FLIGHT];
-    VmaAllocation instance_allocations[FRAMES_IN_FLIGHT];
-    VkDeviceAddress instance_addresses[FRAMES_IN_FLIGHT];
-    Instance *instance_ptrs[FRAMES_IN_FLIGHT];
+    VkBuffer data_buffers[FRAMES_IN_FLIGHT];
+    VmaAllocation data_allocations[FRAMES_IN_FLIGHT];
+    VkDeviceAddress data_addresses[FRAMES_IN_FLIGHT];
+    GpuData *data_ptrs[FRAMES_IN_FLIGHT];
 
-    VkDrawIndirectCommand draws[MAX_DRAWS];
+    VkDrawIndexedIndirectCommand draws[MAX_DRAWS];
     u32 draw_count;
 
     VkBuffer draw_buffers[FRAMES_IN_FLIGHT];
     VmaAllocation draw_allocations[FRAMES_IN_FLIGHT];
-    VkDeviceAddress draw_addresses[FRAMES_IN_FLIGHT];
-    VkDrawIndirectCommand *draw_ptrs[FRAMES_IN_FLIGHT];
+    // VkDeviceAddress draw_addresses[FRAMES_IN_FLIGHT];
+    VkDrawIndexedIndirectCommand *draw_ptrs[FRAMES_IN_FLIGHT];
 };
 
 struct State
