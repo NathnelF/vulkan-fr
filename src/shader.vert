@@ -28,11 +28,18 @@ layout(push_constant) uniform PushConstants
 } push;
 
 layout(location = 0) in vec3 pos;
+layout(location = 1) in vec3 normal;
+layout(location = 2) in vec2 uv;
+
 layout(location = 0) out vec4 color;
+layout(location = 1) out vec3 out_normal;
+layout(location = 2) out vec2 out_uv;
 
 void main()
 {
 	GpuData entity = push.scene.data[gl_InstanceIndex];
 	gl_Position = push.camera.view_proj * entity.transform * vec4(pos, 1.0);
 	color = vec4(1.0, 0.15, 0.15, 1.0);
+	out_normal = normal;
+	out_uv = uv;
 }

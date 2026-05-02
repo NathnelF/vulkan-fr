@@ -67,14 +67,6 @@ void CreateSceneBuffers(State *state)
 
         state->scene.draw_ptrs[i] =
           (VkDrawIndexedIndirectCommand *)alloc_result.pMappedData;
-
-        // VkBufferDeviceAddressInfo address = {
-        //     .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
-        //     .buffer = state->scene.draw_buffers[i],
-        // };
-
-        // state->scene.draw_addresses[i] =
-        //   vkGetBufferDeviceAddress(state->context.device, &address);
     }
 
     debug("Created scene buffers");
@@ -158,8 +150,17 @@ void CreateStaticScene(State *state)
     // a scene is a list of mesh indices and transforms that are converted into
     // draw calls
 
-    // initially let's draw three cubes
-    AddMeshToScene(&state->scene, { 0.0f, 0.0f, 0.0f }, 0, 0);
-    AddMeshToScene(&state->scene, { -6.0f, 0.0f, 0.0f }, 0, 0);
-    AddMeshToScene(&state->scene, { 6.0f, 0.0f, 0.0f }, 0, 0);
+    for (int i = 0; i < 30; i++)
+    {
+        for (int j = 0; j < 30; j++)
+        {
+            AddMeshToScene(
+              &state->scene, { (float)i * 3, 0.0f, (float)j * 3 }, 0, 0);
+        }
+    }
+
+    // // initially let's draw three cubes
+    // AddMeshToScene(&state->scene, { 0.0f, 0.0f, 0.0f }, 0, 0);
+    // AddMeshToScene(&state->scene, { -6.0f, 0.0f, 0.0f }, 0, 0);
+    // AddMeshToScene(&state->scene, { 6.0f, 0.0f, 0.0f }, 0, 0);
 }

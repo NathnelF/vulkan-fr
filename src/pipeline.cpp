@@ -42,35 +42,28 @@ static VertexFormatInfo GetVertexFormatInfo(VertexFormat format)
             info.binding_count = 1;
             info.bindings[0] = {
                 .binding = 0,
-                .stride = 44,
+                .stride = sizeof(StaticVertex),
                 .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
             };
-            info.attribute_count = 4;
+            info.attribute_count = 3;
             info.attributes[0] = {
                 .location = 0,
                 .binding = 0,
                 .format = VK_FORMAT_R32G32B32_SFLOAT,
-                .offset = 0,
+                .offset = offsetof(StaticVertex, position),
             }; // pos
             info.attributes[1] = {
                 .location = 1,
                 .binding = 0,
                 .format = VK_FORMAT_R32G32B32_SFLOAT,
-                .offset = 12,
+                .offset = offsetof(StaticVertex, normal),
             }; // normal
             info.attributes[2] = {
                 .location = 2,
                 .binding = 0,
                 .format = VK_FORMAT_R32G32_SFLOAT,
-                .offset = 24,
+                .offset = offsetof(StaticVertex, uv),
             }; // uv
-
-            info.attributes[3] = {
-                .location = 3,
-                .binding = 0,
-                .format = VK_FORMAT_R32G32B32_SFLOAT,
-                .offset = 32,
-            }; // tangent
             return info;
         }
         case VERTEX_FORMAT_SKINNED:
@@ -169,10 +162,10 @@ PipelineDesc DefaultPipelineDesc(State *state)
         .frag = VK_NULL_HANDLE,
         .blend = BLEND_NONE,
         .depth = DEPTH_READ_WRITE,
-        .vertex_format = VERTEX_FORMAT_BASIC,
+        .vertex_format = VERTEX_FORMAT_STATIC,
         // TODO(Nate): when we graduate to static vertex format we need to
         // switch to cull mode back bit!
-        .cull_mode = VK_CULL_MODE_NONE,
+        .cull_mode = VK_CULL_MODE_BACK_BIT,
         .color_format = state->swapchain.image_format,
         .depth_format = state->context.depth_format,
         .samples = VK_SAMPLE_COUNT_1_BIT,

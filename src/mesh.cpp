@@ -32,7 +32,7 @@ void CreateMegaBuffer(State *state)
 // duplicate code.
 struct RawMesh
 {
-    float *vertices;
+    StaticVertex *vertices;
     u32 vertex_bytes;
     u32 *indices;
     u32 index_bytes;
@@ -66,12 +66,32 @@ u32 LoadMesh(State *state, RawMesh *output, const char *path)
     cgltf_primitive *primitive = &data->meshes[0].primitives[0];
 
     cgltf_accessor *position_accessor = NULL;
+    cgltf_accessor *normal_accessor = NULL;
+    cgltf_accessor *uv_accessor = NULL;
+
     for (u32 i = 0; i < primitive->attributes_count; i++)
     {
-        if (primitive->attributes[i].type == cgltf_attribute_type_position)
+        switch (primitive->attributes[i].type)
         {
-            position_accessor = primitive->attributes[i].data;
-            break;
+            case cgltf_attribute_type_position:
+            {
+                position_accessor = primitive->attributes[i].data;
+                break;
+            }
+            case cgltf_attribute_type_normal:
+            {
+                normal_accessor = primitive->attributes[i].data;
+                break;
+            }
+            case cgltf_attribute_type_texcoord:
+            {
+                uv_accessor = primitive->attributes[i].data;
+                break;
+            }
+            default:
+            {
+                break;
+            }
         }
     }
 
@@ -80,11 +100,20 @@ u32 LoadMesh(State *state, RawMesh *output, const char *path)
         cgltf_free(data);
         err("could not find position accessor %s", path);
     }
+    if (!normal_accessor)
+    {
+        cgltf_free(data);
+        err("no normal data found in %s", path);
+    }
+    if (!uv_accessor)
+    {
+        cgltf_free(data);
+        err("no uv data found in %s", path);
+    }
 
     // get data in RawMesh struct
     u32 vertex_count = (u32)position_accessor->count;
-    u32 float_count = vertex_count * 3;
-    u32 vertex_size = vertex_count * 3 * sizeof(float);
+    u32 vertex_size = vertex_count * sizeof(StaticVertex);
 
     if (output->vertex_bytes + vertex_size > MEGA_BUFFER_SIZE / 2)
     {
@@ -92,10 +121,27 @@ u32 LoadMesh(State *state, RawMesh *output, const char *path)
         err("Veretx staging area full");
     }
 
-    float *vertex_dest =
-      (float *)((u8 *)output->vertices + output->vertex_bytes);
+    StaticVertex *vertex_dest =
+      (StaticVertex *)((u8 *)output->vertices + output->vertex_bytes);
 
-    cgltf_accessor_unpack_floats(position_accessor, vertex_dest, float_count);
+    // unpack positions
+    for (u32 i = 0; i < vertex_count; i++)
+    {
+        cgltf_accessor_read_float(
+          position_accessor, i, &vertex_dest[i].position.X, 3);
+    }
+    // unpack normals
+    for (u32 i = 0; i < vertex_count; i++)
+    {
+        cgltf_accessor_read_float(
+          normal_accessor, i, &vertex_dest[i].normal.X, 3);
+    }
+
+    // unpack uvs
+    for (u32 i = 0; i < vertex_count; i++)
+    {
+        cgltf_accessor_read_float(uv_accessor, i, &vertex_dest[i].uv.X, 2);
+    }
 
     // indices
     cgltf_accessor *index_accessor = primitive->indices;
@@ -121,7 +167,7 @@ u32 LoadMesh(State *state, RawMesh *output, const char *path)
 
     u32 mesh_index = state->mesh_data.mesh_count;
     state->mesh_data.meshes[mesh_index] = {
-        .vertex_offset = output->vertex_bytes / (u32)(sizeof(float) * 3),
+        .vertex_offset = output->vertex_bytes / (u32)(sizeof(StaticVertex)),
         .vertex_count = vertex_count,
         .index_offset = output->index_bytes / (u32)sizeof(u32),
         .index_count = index_count,
@@ -244,7 +290,7 @@ void LoadMeshes(State *state)
     CreateMegaBuffer(state);
 
     RawMesh cpu_staging_buffer = {};
-    cpu_staging_buffer.vertices = (float *)malloc(MEGA_BUFFER_SIZE / 2);
+    cpu_staging_buffer.vertices = (StaticVertex *)malloc(MEGA_BUFFER_SIZE / 2);
     cpu_staging_buffer.indices = (u32 *)malloc(MEGA_BUFFER_SIZE / 2);
 
     LoadMesh(state, &cpu_staging_buffer, "assets/Cube.glb");

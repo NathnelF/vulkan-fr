@@ -73,6 +73,13 @@ enum PiplineFormat
     PIPELINE_ADDITIVE_PARTICLE,
 };
 
+struct StaticVertex
+{
+    HMM_Vec3 position;
+    HMM_Vec3 normal;
+    HMM_Vec2 uv;
+};
+
 struct MeshRegion
 {
     u32 vertex_offset;
@@ -147,7 +154,6 @@ struct GpuData
 
 struct Scene
 {
-    GpuData gpu_data;
     SceneData scene_data;
     u32 entity_count;
 
@@ -161,7 +167,6 @@ struct Scene
 
     VkBuffer draw_buffers[FRAMES_IN_FLIGHT];
     VmaAllocation draw_allocations[FRAMES_IN_FLIGHT];
-    // VkDeviceAddress draw_addresses[FRAMES_IN_FLIGHT];
     VkDrawIndexedIndirectCommand *draw_ptrs[FRAMES_IN_FLIGHT];
 };
 
