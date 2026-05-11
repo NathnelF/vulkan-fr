@@ -113,6 +113,7 @@ void Render(State *state, int frame_index)
     PushConstants push = {
         .camera_address = state->camera.camera_buffer_address[frame_index],
         .scene_address = state->scene.data_addresses[frame_index],
+        .light_address = state->light_data.addresses[frame_index],
     };
 
     vkCmdPushConstants(frame->command_buffer,

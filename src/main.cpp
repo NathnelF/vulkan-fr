@@ -2,6 +2,7 @@
 
 #include "camera.cpp"
 #include "context.cpp"
+#include "light.cpp"
 #include "mesh.cpp"
 #include "pipeline.cpp"
 #include "render.cpp"
@@ -19,6 +20,7 @@ int main()
     CreateSwapchain(&state, VK_NULL_HANDLE);
 
     CreateCameraBuffer(&state);
+    CreateLightBuffer(&state);
     CreateSceneBuffers(&state);
     CreateStaticScene(&state);
     LoadMeshes(&state);

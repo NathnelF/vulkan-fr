@@ -102,12 +102,7 @@ struct MeshData
 struct CameraConstants
 {
     HMM_Mat4 view_proj;
-};
-
-struct PushConstants
-{
-    VkDeviceAddress camera_address;
-    VkDeviceAddress scene_address;
+    HMM_Vec3 camera_position;
 };
 
 struct Camera
@@ -170,6 +165,32 @@ struct Scene
     VkDrawIndexedIndirectCommand *draw_ptrs[FRAMES_IN_FLIGHT];
 };
 
+struct LightData
+{
+    HMM_Vec3 direction;
+    float padding;
+    HMM_Vec3 color;
+    float ambient_strength;
+    float specular_strength;
+    float shininess;
+    float padding2[2];
+};
+
+struct LightBuffer
+{
+    VkBuffer buffers[FRAMES_IN_FLIGHT];
+    VmaAllocation allocations[FRAMES_IN_FLIGHT];
+    VkDeviceAddress addresses[FRAMES_IN_FLIGHT];
+    LightData *ptrs[FRAMES_IN_FLIGHT];
+};
+
+struct PushConstants
+{
+    VkDeviceAddress camera_address;
+    VkDeviceAddress scene_address;
+    VkDeviceAddress light_address;
+};
+
 struct State
 {
     Context context;
@@ -178,4 +199,5 @@ struct State
     MeshData mesh_data;
     Camera camera;
     Scene scene;
+    LightBuffer light_data;
 };

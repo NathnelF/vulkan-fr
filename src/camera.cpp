@@ -78,23 +78,23 @@ void UpdateCamera(State *state, float dt, int frame_index)
     // move with keys
     if (keys[SDL_SCANCODE_W])
     {
-        debug("forward");
+        // debug("forward");
         camera->target = HMM_AddV3(camera->target, HMM_MulV3F(forward, pan));
     }
     if (keys[SDL_SCANCODE_S])
     {
-        debug("back");
+        // debug("back");
         camera->target = HMM_AddV3(camera->target, HMM_MulV3F(forward, -pan));
     }
 
     if (keys[SDL_SCANCODE_D])
     {
-        debug("right");
+        // debug("right");
         camera->target = HMM_AddV3(camera->target, HMM_MulV3F(right, pan));
     }
     if (keys[SDL_SCANCODE_A])
     {
-        debug("left");
+        // debug("left");
         camera->target = HMM_AddV3(camera->target, HMM_MulV3F(right, -pan));
     }
 
@@ -161,6 +161,9 @@ void UpdateCamera(State *state, float dt, int frame_index)
       500.0f);
     proj.Elements[1][1] *= -1.0f;
 
-    CameraConstants c = { HMM_MulM4(proj, view) };
+    CameraConstants c = {
+        .view_proj = HMM_MulM4(proj, view),
+        .camera_position = position,
+    };
     memcpy(state->camera.ptrs[frame_index], &c, sizeof(CameraConstants));
 }
