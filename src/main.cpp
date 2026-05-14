@@ -25,7 +25,8 @@ int main()
     CreateStaticScene(&state);
     LoadMeshes(&state);
 
-    // Load shaders
+    // TODO(Nate): Load all pipelines and shaders upfront.
+    //  Load shaders
     VkShaderModule basic_vert = LoadShaderModule(&state, "src/vert.spv");
     VkShaderModule basic_frag = LoadShaderModule(&state, "src/frag.spv");
     // Load pipelines
@@ -62,6 +63,7 @@ int main()
 
     int frame_index = 0;
     int running = 1;
+    float total_time = 0.0f;
 
     u64 freq = SDL_GetPerformanceFrequency();
     u64 last = SDL_GetPerformanceCounter();
@@ -72,6 +74,7 @@ int main()
         u64 now = SDL_GetPerformanceCounter();
         float dt = (float)(now - last) / (float)freq;
         last = now;
+        total_time += dt;
 
         while (SDL_PollEvent(&event))
         {
@@ -102,6 +105,7 @@ int main()
         validate(vkResetFences(state.context.device, 1, &frame->fence),
                  "reset fence failed");
 
+        // OrbitLight(&state, frame_index, total_time);
         UpdateCamera(&state, dt, frame_index);
         UpdateScene(&state, frame_index);
         Render(&state, frame_index);

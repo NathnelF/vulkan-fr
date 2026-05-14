@@ -323,3 +323,5 @@ VkShaderModule LoadShaderModule(State *state, const char *path)
     debug("loaded shader: %s", path);
     return module;
 }
+
+// TODO(Nate): void LoadAllPipelines(State *state);

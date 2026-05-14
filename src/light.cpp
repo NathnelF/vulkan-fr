@@ -46,3 +46,16 @@ void CreateLightBuffer(State *state)
 
     debug("created light buffer");
 }
+
+void OrbitLight(State *state, int frame_index, float time)
+{
+    LightData *light = state->light_data.ptrs[frame_index];
+
+    float speed = 0.25f;
+
+    light->direction = HMM_Vec3({
+      HMM_CosF(time * speed),
+      -1.0f,
+      HMM_SinF(time * speed),
+    });
+}

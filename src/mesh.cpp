@@ -27,9 +27,7 @@ void CreateMegaBuffer(State *state)
     state->mesh_data.mesh_count = 0;
 }
 
-// TODO(Nate): This only works for our basic format with 3 floats as position.
-// When we graduate to static and skinned vertex formats we will need to
-// duplicate code.
+// TODO(Nate): This only works for our static vertex
 struct RawMesh
 {
     StaticVertex *vertices;
