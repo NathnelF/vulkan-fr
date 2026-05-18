@@ -142,6 +142,15 @@ void Render(State *state, int frame_index)
     };
     vkCmdSetScissor(frame->command_buffer, 0, 1, &scissor);
 
+    vkCmdBindDescriptorSets(frame->command_buffer,
+                            VK_PIPELINE_BIND_POINT_GRAPHICS,
+                            pipeline->layout,
+                            0,
+                            1,
+                            &state->texture_data.set,
+                            0,
+                            NULL);
+
     VkDeviceSize vertex_offset = 0;
     vkCmdBindVertexBuffers(
       frame->command_buffer, 0, 1, &state->mesh_data.buffer, &vertex_offset);

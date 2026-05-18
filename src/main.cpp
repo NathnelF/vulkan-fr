@@ -8,6 +8,7 @@
 #include "render.cpp"
 #include "scene.cpp"
 #include "swapchain.cpp"
+#include "texture.cpp"
 
 int main()
 {
@@ -19,11 +20,14 @@ int main()
     InitContext(&state);
     CreateSwapchain(&state, VK_NULL_HANDLE);
 
+    LoadMeshes(&state);
+    CreateTexturePool(&state);
+    // TODO(Nate): move texture loads to scene creation
+    LoadTexture(&state, "assets/bricks.png");
     CreateCameraBuffer(&state);
     CreateLightBuffer(&state);
     CreateSceneBuffers(&state);
     CreateStaticScene(&state);
-    LoadMeshes(&state);
 
     // TODO(Nate): Load all pipelines and shaders upfront.
     //  Load shaders
@@ -43,8 +47,8 @@ int main()
 
     VkPipelineLayoutCreateInfo basic_pipeline_layout_desc = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .setLayoutCount = 0,
-        .pSetLayouts = NULL,
+        .setLayoutCount = 1,
+        .pSetLayouts = &state.texture_data.layout,
         .pushConstantRangeCount = 1,
         .pPushConstantRanges = &push,
     };

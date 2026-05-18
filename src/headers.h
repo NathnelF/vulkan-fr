@@ -184,6 +184,25 @@ struct LightBuffer
     LightData *ptrs[FRAMES_IN_FLIGHT];
 };
 
+#define MAX_TEXTURES 1024
+
+struct Texture
+{
+    VkImage image;
+    VkImageView view;
+    VmaAllocation allocation;
+    u32 index;
+};
+
+struct TexturePool
+{
+    VkDescriptorSetLayout layout;
+    VkDescriptorPool pool;
+    VkDescriptorSet set;
+    VkSampler sampler;
+    u32 count;
+};
+
 struct PushConstants
 {
     VkDeviceAddress camera_address;
@@ -200,4 +219,5 @@ struct State
     Camera camera;
     Scene scene;
     LightBuffer light_data;
+    TexturePool texture_data;
 };

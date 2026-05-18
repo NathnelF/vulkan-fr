@@ -36,6 +36,7 @@ layout(location = 2) in vec2 uv;
 layout(location = 0) out vec3 out_world_position;
 layout(location = 1) out vec3 out_normal;
 layout(location = 2) out vec2 out_uv;
+layout(location = 3) out flat uint out_texture_index;
 
 void main()
 {
@@ -47,4 +48,5 @@ void main()
 	mat3 normal_matrix = transpose(inverse(mat3(entity.transform)));
 	out_normal = normalize(normal_matrix * normal);
 	out_uv = uv;
+	out_texture_index = entity.texture_index;
 }

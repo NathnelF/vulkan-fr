@@ -22,7 +22,8 @@ add_executable(main
  src/main.cpp
  src/VkBootstrap.cpp
  src/vma.cpp
- src/cgltf.cpp)
+ src/cgltf.cpp
+ src/stb_image.c)
 
 target_include_directories(main PRIVATE include)
 
