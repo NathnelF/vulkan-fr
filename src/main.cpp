@@ -25,6 +25,7 @@ int main()
     // TODO(Nate): move texture loads to scene creation
     LoadTexture(&state, "assets/bricks_albedo.png");
     LoadTexture(&state, "assets/bricks_ao.png");
+    LoadTexture(&state, "assets/bricks_normal.png");
 
     CreateCameraBuffer(&state);
     CreateLightBuffer(&state);

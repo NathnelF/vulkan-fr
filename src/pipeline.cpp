@@ -45,7 +45,7 @@ static VertexFormatInfo GetVertexFormatInfo(VertexFormat format)
                 .stride = sizeof(StaticVertex),
                 .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
             };
-            info.attribute_count = 3;
+            info.attribute_count = 4;
             info.attributes[0] = {
                 .location = 0,
                 .binding = 0,
@@ -64,6 +64,12 @@ static VertexFormatInfo GetVertexFormatInfo(VertexFormat format)
                 .format = VK_FORMAT_R32G32_SFLOAT,
                 .offset = offsetof(StaticVertex, uv),
             }; // uv
+            info.attributes[3] = {
+                .location = 3,
+                .binding = 0,
+                .format = VK_FORMAT_R32G32B32A32_SFLOAT,
+                .offset = offsetof(StaticVertex, tangent),
+            }; // tangeant
             return info;
         }
         case VERTEX_FORMAT_SKINNED:

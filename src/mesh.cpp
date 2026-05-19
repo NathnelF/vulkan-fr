@@ -66,6 +66,7 @@ u32 LoadMesh(State *state, RawMesh *output, const char *path)
     cgltf_accessor *position_accessor = NULL;
     cgltf_accessor *normal_accessor = NULL;
     cgltf_accessor *uv_accessor = NULL;
+    cgltf_accessor *tangent_accessor = NULL;
 
     for (u32 i = 0; i < primitive->attributes_count; i++)
     {
@@ -84,6 +85,11 @@ u32 LoadMesh(State *state, RawMesh *output, const char *path)
             case cgltf_attribute_type_texcoord:
             {
                 uv_accessor = primitive->attributes[i].data;
+                break;
+            }
+            case cgltf_attribute_type_tangent:
+            {
+                tangent_accessor = primitive->attributes[i].data;
                 break;
             }
             default:
@@ -107,6 +113,11 @@ u32 LoadMesh(State *state, RawMesh *output, const char *path)
     {
         cgltf_free(data);
         err("no uv data found in %s", path);
+    }
+    if (!tangent_accessor)
+    {
+        cgltf_free(data);
+        err("no tangent data found in %s", path);
     }
 
     // get data in RawMesh struct
@@ -139,6 +150,13 @@ u32 LoadMesh(State *state, RawMesh *output, const char *path)
     for (u32 i = 0; i < vertex_count; i++)
     {
         cgltf_accessor_read_float(uv_accessor, i, &vertex_dest[i].uv.X, 2);
+    }
+
+    // unpack tangetns
+    for (u32 i = 0; i < vertex_count; i++)
+    {
+        cgltf_accessor_read_float(
+          tangent_accessor, i, &vertex_dest[i].tangent.X, 4);
     }
 
     // indices

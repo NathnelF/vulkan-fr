@@ -34,8 +34,11 @@ layout(push_constant) uniform PushConstants
 layout(location = 0) in vec3 in_world_position;
 layout(location = 1) in vec3 in_normal;
 layout(location = 2) in vec2 in_uv;
-layout(location = 3) in flat uint in_texture_index;
-layout(location = 4) in flat uint in_ao_index;
+layout(location = 3) in vec3 in_tangent;
+layout(location = 4) in vec3 in_bitangent;
+layout(location = 5) in flat uint in_texture_index;
+layout(location = 6) in flat uint in_ao_index;
+layout(location = 7) in flat uint in_normal_index;
 
 layout(location = 0) out vec4 out_color;
 
@@ -43,8 +46,17 @@ layout(set = 0, binding = 0) uniform sampler2D textures[];
 
 void main()
 {
+
+	// sample normal map and transform to world space
+    vec3 normal_sample = texture(textures[nonuniformEXT(in_normal_index)], in_uv).rgb;
+    normal_sample = normal_sample * 2.0 - 1.0;  // remap from [0,1] to [-1,1]
+    normal_sample.y = -normal_sample.y;
+
+    mat3 TBN    = mat3(in_tangent, in_bitangent, in_normal);
+    vec3 normal = normalize(TBN * normal_sample);  // tangent space → world space
+
+
 	vec3 surface_color = texture(textures[nonuniformEXT(in_texture_index)], in_uv).rgb;
-	vec3 normal = normalize(in_normal);
 	vec3 light_dir = normalize(-push.light.direction);
 
 	//ambient

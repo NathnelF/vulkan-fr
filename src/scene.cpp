@@ -86,7 +86,8 @@ void AddMeshToScene(Scene *scene,
                     HMM_Vec3 position,
                     u32 mesh_index,
                     u32 texture_index,
-                    u32 ao_index)
+                    u32 ao_index,
+                    u32 normal_index)
 {
     if (scene->entity_count + 1 > MAX_ENTITIES)
     {
@@ -99,6 +100,7 @@ void AddMeshToScene(Scene *scene,
     scene->scene_data.mesh_indices[count] = mesh_index;
     scene->scene_data.texture_indices[count] = texture_index;
     scene->scene_data.ao_indices[count] = ao_index;
+    scene->scene_data.normal_indices[count] = normal_index;
     BuildTransform(&scene->scene_data, count);
     scene->entity_count++;
 }
@@ -115,6 +117,7 @@ void UpdateScene(State *state, int frame_index)
             .mesh_index = scene->scene_data.mesh_indices[i],
             .texture_index = scene->scene_data.texture_indices[i],
             .ao_index = scene->scene_data.ao_indices[i],
+            .normal_index = scene->scene_data.normal_indices[i],
         };
     }
 
@@ -158,7 +161,7 @@ void CreateStaticScene(State *state)
         for (int j = 0; j < 30; j++)
         {
             AddMeshToScene(
-              &state->scene, { (float)i * 3, 0.0f, (float)j * 3 }, 0, 0, 1);
+              &state->scene, { (float)i * 3, 0.0f, (float)j * 3 }, 0, 0, 1, 2);
         }
     }
 

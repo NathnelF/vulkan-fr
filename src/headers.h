@@ -78,6 +78,7 @@ struct StaticVertex
     HMM_Vec3 position;
     HMM_Vec3 normal;
     HMM_Vec2 uv;
+    HMM_Vec4 tangent;
 };
 
 struct MeshRegion
@@ -138,6 +139,7 @@ struct SceneData
     u32 mesh_indices[MAX_ENTITIES];
     u32 texture_indices[MAX_ENTITIES];
     u32 ao_indices[MAX_ENTITIES];
+    u32 normal_indices[MAX_ENTITIES];
 };
 
 struct GpuData
@@ -147,8 +149,7 @@ struct GpuData
     u32 texture_index; // albedo
     u32 ao_index;      // ambient occlussion
     // TODO(Nate): add pbr (roughness, metallic)
-    // TODO(Nate): add normal map
-    float padding;
+    u32 normal_index;
 };
 
 struct Scene

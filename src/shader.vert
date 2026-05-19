@@ -16,7 +16,7 @@ struct GpuData
 	uint mesh_index;
 	uint texture_index;
 	uint ao_index;
-	float padding;
+	uint normal_index;
 };
 
 layout(buffer_reference, scalar) readonly buffer SceneBuffer
@@ -34,12 +34,16 @@ layout(push_constant) uniform PushConstants
 layout(location = 0) in vec3 pos;
 layout(location = 1) in vec3 normal;
 layout(location = 2) in vec2 uv;
+layout(location = 3) in vec4 tangent;
 
 layout(location = 0) out vec3 out_world_position;
 layout(location = 1) out vec3 out_normal;
 layout(location = 2) out vec2 out_uv;
-layout(location = 3) out flat uint out_texture_index;
-layout(location = 4) out flat uint out_ao_index;
+layout(location = 3) out vec3 out_tangent;
+layout(location = 4) out vec3 out_bitangent;
+layout(location = 5) out flat uint out_texture_index;
+layout(location = 6) out flat uint out_ao_index;
+layout(location = 7) out flat uint out_normal_index;
 
 void main()
 {
@@ -48,9 +52,19 @@ void main()
 	gl_Position = push.camera.view_proj * world_position;
 	out_world_position = world_position.xyz;
 
-	mat3 normal_matrix = transpose(inverse(mat3(entity.transform)));
-	out_normal = normalize(normal_matrix * normal);
+	mat3 model_mat3 = mat3(entity.transform);
+	mat3 normal_mat = transpose(inverse(model_mat3));
+
+	vec3 T = normalize(model_mat3 * tangent.xyz);
+	vec3 N = normalize(normal_mat * normal);
+	T = normalize(T - dot(T, N) * N);
+	vec3 B = cross(N, T) * tangent.w;
+
+	out_normal = N;
 	out_uv = uv;
+	out_tangent = T;
+	out_bitangent = B;
 	out_texture_index = entity.texture_index;
 	out_ao_index = entity.ao_index;
+	out_normal_index = entity.normal_index;
 }
