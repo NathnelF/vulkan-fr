@@ -7,6 +7,7 @@
 layout(buffer_reference, scalar) readonly buffer CameraBuffer
 {
     mat4 view_proj;
+    vec3 camera_pos;
 };
 
 struct GpuData
@@ -14,7 +15,8 @@ struct GpuData
 	mat4 transform;
 	uint mesh_index;
 	uint texture_index;
-	vec2 padding;
+	uint ao_index;
+	float padding;
 };
 
 layout(buffer_reference, scalar) readonly buffer SceneBuffer
@@ -37,6 +39,7 @@ layout(location = 0) out vec3 out_world_position;
 layout(location = 1) out vec3 out_normal;
 layout(location = 2) out vec2 out_uv;
 layout(location = 3) out flat uint out_texture_index;
+layout(location = 4) out flat uint out_ao_index;
 
 void main()
 {
@@ -49,4 +52,5 @@ void main()
 	out_normal = normalize(normal_matrix * normal);
 	out_uv = uv;
 	out_texture_index = entity.texture_index;
+	out_ao_index = entity.ao_index;
 }

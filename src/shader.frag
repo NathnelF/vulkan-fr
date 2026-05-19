@@ -35,6 +35,7 @@ layout(location = 0) in vec3 in_world_position;
 layout(location = 1) in vec3 in_normal;
 layout(location = 2) in vec2 in_uv;
 layout(location = 3) in flat uint in_texture_index;
+layout(location = 4) in flat uint in_ao_index;
 
 layout(location = 0) out vec4 out_color;
 
@@ -47,7 +48,8 @@ void main()
 	vec3 light_dir = normalize(-push.light.direction);
 
 	//ambient
-	vec3 ambient = push.light.ambient_strength * push.light.color;
+	float ao = texture(textures[nonuniformEXT(in_ao_index)], in_uv).r;
+	vec3 ambient = push.light.ambient_strength * push.light.color * ao;
 
 	//diffuse
 	float diff = max(dot(normal, light_dir), 0.0);

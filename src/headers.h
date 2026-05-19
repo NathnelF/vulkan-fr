@@ -137,14 +137,18 @@ struct SceneData
     HMM_Mat4 transforms[MAX_ENTITIES];
     u32 mesh_indices[MAX_ENTITIES];
     u32 texture_indices[MAX_ENTITIES];
+    u32 ao_indices[MAX_ENTITIES];
 };
 
 struct GpuData
 {
     HMM_Mat4 transform;
     u32 mesh_index;
-    u32 texture_index;
-    float padding[2];
+    u32 texture_index; // albedo
+    u32 ao_index;      // ambient occlussion
+    // TODO(Nate): add pbr (roughness, metallic)
+    // TODO(Nate): add normal map
+    float padding;
 };
 
 struct Scene
