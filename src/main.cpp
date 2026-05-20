@@ -20,7 +20,11 @@ int main()
     InitContext(&state);
     CreateSwapchain(&state, VK_NULL_HANDLE);
 
+    VmaTotalStatistics stats;
     LoadMeshes(&state);
+    vmaCalculateStatistics(state.context.allocator, &stats);
+    debug("Mesh VRAM used: %llu MB",
+          stats.total.statistics.allocationBytes / (1024 * 1024));
     CreateTexturePool(&state);
     // TODO(Nate): move texture loads to scene creation
     LoadTexture(&state, "assets/bricks_albedo.png");
@@ -32,41 +36,7 @@ int main()
     CreateSceneBuffers(&state);
     CreateStaticScene(&state);
 
-    // TODO(Nate): Load all pipelines and shaders upfront.
-    //  Load shaders
-    VkShaderModule basic_vert = LoadShaderModule(&state, "src/vert.spv");
-    VkShaderModule basic_frag = LoadShaderModule(&state, "src/frag.spv");
-    // Load pipelines
-    PipelineDesc basic_pipeline_desc = DefaultPipelineDesc(&state);
-    basic_pipeline_desc.vert = basic_vert;
-    basic_pipeline_desc.frag = basic_frag;
-
-    // push constants
-    VkPushConstantRange push = {
-        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-        .offset = 0,
-        .size = sizeof(PushConstants),
-    };
-
-    VkPipelineLayoutCreateInfo basic_pipeline_layout_desc = {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .setLayoutCount = 1,
-        .pSetLayouts = &state.texture_data.layout,
-        .pushConstantRangeCount = 1,
-        .pPushConstantRanges = &push,
-    };
-
-    VkPipelineLayout basic_pipeline_layout;
-    validate(vkCreatePipelineLayout(state.context.device,
-                                    &basic_pipeline_layout_desc,
-                                    NULL,
-                                    &basic_pipeline_layout),
-             "could not create pipeline layout");
-
-    basic_pipeline_desc.layout = basic_pipeline_layout;
-
-    state.pipelines[PIPELINE_BASIC] =
-      BuildPipeline(&state, &basic_pipeline_desc);
+    LoadAllPipelines(&state);
 
     int frame_index = 0;
     int running = 1;

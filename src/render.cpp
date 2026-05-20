@@ -68,7 +68,7 @@ void Render(State *state, int frame_index)
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
         .clearValue = { 
             .color = { 
-                .float32 = { 0.1f, 0.1f, 0.1f, 1.0f, } 
+                .float32 = { 0.53f, 0.81f, 0.92f, 1.0f, } 
             } 
         },
     };

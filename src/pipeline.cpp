@@ -331,3 +331,42 @@ VkShaderModule LoadShaderModule(State *state, const char *path)
 }
 
 // TODO(Nate): void LoadAllPipelines(State *state);
+
+void LoadAllPipelines(State *state)
+{
+    // push constants
+    VkPushConstantRange push = {
+        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+        .offset = 0,
+        .size = sizeof(PushConstants),
+    };
+
+    // standard layout
+    VkPipelineLayoutCreateInfo standard_pipeline_layout_desc = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .setLayoutCount = 1,
+        .pSetLayouts = &state->texture_data.layout,
+        .pushConstantRangeCount = 1,
+        .pPushConstantRanges = &push,
+    };
+
+    VkPipelineLayout standard_pipeline_layout;
+    validate(vkCreatePipelineLayout(state->context.device,
+                                    &standard_pipeline_layout_desc,
+                                    NULL,
+                                    &standard_pipeline_layout),
+             "could not create pipeline layout");
+
+    // build basic pipeline
+    PipelineDesc basic_desc = DefaultPipelineDesc(state);
+    // shaders
+    VkShaderModule basic_vert = LoadShaderModule(state, "src/vert.spv");
+    VkShaderModule basic_frag = LoadShaderModule(state, "src/frag.spv");
+    basic_desc.vert = basic_vert;
+    basic_desc.frag = basic_frag;
+
+    // apply layout
+    basic_desc.layout = standard_pipeline_layout;
+    // build pipeline
+    state->pipelines[PIPELINE_BASIC] = BuildPipeline(state, &basic_desc);
+}

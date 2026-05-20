@@ -311,5 +311,17 @@ void LoadMeshes(State *state)
 
     LoadMesh(state, &cpu_staging_buffer, "assets/Cube.glb");
 
+    debug("vertex data: %u bytes (%.2f KB)",
+          cpu_staging_buffer.vertex_bytes,
+          cpu_staging_buffer.vertex_bytes / 1024.0f);
+    debug("index data:  %u bytes (%.2f KB)",
+          cpu_staging_buffer.index_bytes,
+          cpu_staging_buffer.index_bytes / 1024.0f);
+    debug("total mesh:  %u bytes (%.2f KB) of %llu MB budget",
+          cpu_staging_buffer.vertex_bytes + cpu_staging_buffer.index_bytes,
+          (cpu_staging_buffer.vertex_bytes + cpu_staging_buffer.index_bytes) /
+            1024.0f,
+          MEGA_BUFFER_SIZE / (1024 * 1024));
+
     UploadMeshToGPU(state, &cpu_staging_buffer);
 }
