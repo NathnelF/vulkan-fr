@@ -310,6 +310,7 @@ void LoadMeshes(State *state)
     cpu_staging_buffer.indices = (u32 *)malloc(MEGA_BUFFER_SIZE / 2);
 
     LoadMesh(state, &cpu_staging_buffer, "assets/Cube.glb");
+    LoadMesh(state, &cpu_staging_buffer, "assets/ground.glb");
 
     debug("vertex data: %u bytes (%.2f KB)",
           cpu_staging_buffer.vertex_bytes,

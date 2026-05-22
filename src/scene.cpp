@@ -156,17 +156,18 @@ void CreateStaticScene(State *state)
     // a scene is a list of mesh indices and transforms that are converted into
     // draw calls
 
-    for (int i = 0; i < 30; i++)
-    {
-        for (int j = 0; j < 30; j++)
-        {
-            AddMeshToScene(
-              &state->scene, { (float)i * 3, 0.0f, (float)j * 3 }, 0, 0, 1, 2);
-        }
-    }
-
+    // for (int i = 0; i < 30; i++)
+    // {
+    //     for (int j = 0; j < 30; j++)
+    //     {
+    //         AddMeshToScene(
+    //           &state->scene, { (float)i * 3, 0.0f, (float)j * 3 }, 0, 0, 1,
+    //           2);
+    //     }
+    // }
+    AddMeshToScene(&state->scene, { 0.0f, -1.0f, 0.0f }, 1, 0, 1, 2);
     // // initially let's draw three cubes
-    // AddMeshToScene(&state->scene, { 0.0f, 0.0f, 0.0f }, 0, 0);
-    // AddMeshToScene(&state->scene, { -6.0f, 0.0f, 0.0f }, 0, 0);
-    // AddMeshToScene(&state->scene, { 6.0f, 0.0f, 0.0f }, 0, 0);
+    AddMeshToScene(&state->scene, { 0.0f, 0.0f, 0.0f }, 0, 0, 1, 2);
+    AddMeshToScene(&state->scene, { -6.0f, 0.0f, 0.0f }, 0, 0, 1, 2);
+    AddMeshToScene(&state->scene, { 6.0f, 0.0f, 0.0f }, 0, 0, 1, 2);
 }
