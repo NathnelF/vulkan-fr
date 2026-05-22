@@ -165,9 +165,9 @@ void CreateStaticScene(State *state)
     //           2);
     //     }
     // }
-    AddMeshToScene(&state->scene, { 0.0f, -1.1f, 0.0f }, 1, 0, 1, 2);
+    AddMeshToScene(&state->scene, { 0.0f, 0.0f, 0.0f }, 1, 0, 1, 2);
     // // initially let's draw three cubes
-    AddMeshToScene(&state->scene, { 0.0f, 0.0f, 0.0f }, 0, 0, 1, 2);
-    AddMeshToScene(&state->scene, { -6.0f, 0.0f, 0.0f }, 0, 0, 1, 2);
-    AddMeshToScene(&state->scene, { 6.0f, 0.0f, 0.0f }, 0, 0, 1, 2);
+    AddMeshToScene(&state->scene, { 0.0f, 1.0f, 0.0f }, 0, 0, 1, 2);
+    AddMeshToScene(&state->scene, { -6.0f, 1.0f, 0.0f }, 0, 0, 1, 2);
+    AddMeshToScene(&state->scene, { 6.0f, 1.0f, 0.0f }, 0, 0, 1, 2);
 }
