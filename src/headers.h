@@ -91,6 +91,7 @@ struct MeshRegion
 
 #define MAX_MESHES 128
 #define MEGA_BUFFER_SIZE Megabytes(128)
+#define SHADOW_MAP_SIZE 2048
 
 struct MeshData
 {
@@ -179,6 +180,7 @@ struct LightData
     float specular_strength;
     float shininess;
     float padding2[2];
+    HMM_Mat4 light_view_proj;
 };
 
 struct LightBuffer
@@ -208,6 +210,17 @@ struct TexturePool
     u32 count;
 };
 
+struct ShadowMap
+{
+    VkImage image;
+    VkImageView view;
+    VmaAllocation alloc;
+    VkSampler sampler;
+    VkDescriptorSetLayout layout;
+    VkDescriptorPool pool;
+    VkDescriptorSet set;
+};
+
 struct PushConstants
 {
     VkDeviceAddress camera_address;
@@ -225,4 +238,5 @@ struct State
     Scene scene;
     LightBuffer light_data;
     TexturePool texture_data;
+    ShadowMap shadow_map;
 };

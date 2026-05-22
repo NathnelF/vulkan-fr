@@ -47,6 +47,28 @@ void CreateLightBuffer(State *state)
     debug("created light buffer");
 }
 
+void UpdateLightMatrix(State *state, u32 frame_index)
+{
+    LightData *data = state->light_data.ptrs[frame_index];
+
+    HMM_Vec3 light_dir = HMM_NormV3(data->direction);
+
+    // Look from behind the light toward the scene center (30x30 grid at 3-unit spacing)
+    HMM_Vec3 scene_center = { 43.5f, 0.0f, 43.5f };
+    HMM_Vec3 eye = HMM_SubV3(scene_center, HMM_MulV3F(light_dir, 150.0f));
+
+    // Fall back to Z-up when light is nearly vertical
+    HMM_Vec3 up = { 0.0f, 1.0f, 0.0f };
+    if (fabsf(HMM_DotV3(light_dir, up)) > 0.99f)
+        up = { 0.0f, 0.0f, 1.0f };
+
+    HMM_Mat4 view = HMM_LookAt_RH(eye, scene_center, up);
+    HMM_Mat4 proj = HMM_Orthographic_RH_ZO(-65.0f, 65.0f, -65.0f, 65.0f, 0.1f, 500.0f);
+    proj.Elements[1][1] *= -1.0f;
+
+    data->light_view_proj = HMM_MulM4(proj, view);
+}
+
 void OrbitLight(State *state, int frame_index, float time)
 {
     LightData *light = state->light_data.ptrs[frame_index];

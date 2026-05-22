@@ -37,6 +37,7 @@ struct PipelineDesc
 
     VkFormat color_format;
     VkFormat depth_format;
+    VkFormat stencil_format;
 
     VkSampleCountFlagBits samples;
 

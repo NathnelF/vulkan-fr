@@ -174,6 +174,7 @@ PipelineDesc DefaultPipelineDesc(State *state)
         .cull_mode = VK_CULL_MODE_BACK_BIT,
         .color_format = state->swapchain.image_format,
         .depth_format = state->context.depth_format,
+        .stencil_format = state->context.depth_format,
         .samples = VK_SAMPLE_COUNT_1_BIT,
     };
     return desc;
@@ -266,7 +267,7 @@ Pipeline BuildPipeline(State *state, PipelineDesc *desc)
         .colorAttachmentCount = (desc->frag != VK_NULL_HANDLE) ? 1u : 0u,
         .pColorAttachmentFormats = &desc->color_format,
         .depthAttachmentFormat = desc->depth_format,
-        .stencilAttachmentFormat = desc->depth_format,
+        .stencilAttachmentFormat = desc->stencil_format,
     };
 
     VkGraphicsPipelineCreateInfo pipeline_info = {
@@ -334,18 +335,23 @@ VkShaderModule LoadShaderModule(State *state, const char *path)
 
 void LoadAllPipelines(State *state)
 {
-    // push constants
+    // push constants — both vertex and fragment stages use push constants
     VkPushConstantRange push = {
-        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+        .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
         .offset = 0,
         .size = sizeof(PushConstants),
     };
 
-    // standard layout
+    // set 0 = texture array, set 1 = shadow map
+    VkDescriptorSetLayout set_layouts[] = {
+        state->texture_data.layout,
+        state->shadow_map.layout,
+    };
+
     VkPipelineLayoutCreateInfo standard_pipeline_layout_desc = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .setLayoutCount = 1,
-        .pSetLayouts = &state->texture_data.layout,
+        .setLayoutCount = 2,
+        .pSetLayouts = set_layouts,
         .pushConstantRangeCount = 1,
         .pPushConstantRanges = &push,
     };
@@ -359,14 +365,22 @@ void LoadAllPipelines(State *state)
 
     // build basic pipeline
     PipelineDesc basic_desc = DefaultPipelineDesc(state);
-    // shaders
-    VkShaderModule basic_vert = LoadShaderModule(state, "src/vert.spv");
-    VkShaderModule basic_frag = LoadShaderModule(state, "src/frag.spv");
+    VkShaderModule basic_vert = LoadShaderModule(state, "src/shader_vert.spv");
+    VkShaderModule basic_frag = LoadShaderModule(state, "src/shader_frag.spv");
     basic_desc.vert = basic_vert;
     basic_desc.frag = basic_frag;
-
-    // apply layout
     basic_desc.layout = standard_pipeline_layout;
-    // build pipeline
     state->pipelines[PIPELINE_BASIC] = BuildPipeline(state, &basic_desc);
+
+    // build shadow map pipeline (depth-only, front-face cull to reduce peter-panning)
+    PipelineDesc shadow_desc = DefaultPipelineDesc(state);
+    VkShaderModule shadow_vert = LoadShaderModule(state, "src/shadow_vert.spv");
+    shadow_desc.vert = shadow_vert;
+    shadow_desc.frag = VK_NULL_HANDLE;
+    shadow_desc.depth = DEPTH_READ_WRITE;
+    shadow_desc.cull_mode = VK_CULL_MODE_FRONT_BIT;
+    shadow_desc.depth_format = VK_FORMAT_D32_SFLOAT;
+    shadow_desc.stencil_format = VK_FORMAT_UNDEFINED;
+    shadow_desc.layout = standard_pipeline_layout;
+    state->pipelines[PIPELINE_SHADOW_MAP_STATIC] = BuildPipeline(state, &shadow_desc);
 }

@@ -37,6 +37,125 @@ void Render(State *state, int frame_index)
     validate(vkBeginCommandBuffer(frame->command_buffer, &begin_info),
              "begin command buffer failed");
 
+    PushConstants push = {
+        .camera_address = state->camera.camera_buffer_address[frame_index],
+        .scene_address  = state->scene.data_addresses[frame_index],
+        .light_address  = state->light_data.addresses[frame_index],
+    };
+
+    VkDeviceSize vertex_offset = 0;
+    VkDeviceSize index_offset  = MEGA_BUFFER_SIZE / 2;
+
+    // --- Shadow pass ---
+
+    VkImageMemoryBarrier2 shadow_to_depth = {
+        .sType         = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+        .srcStageMask  = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT,
+        .srcAccessMask = 0,
+        .dstStageMask  = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT |
+                         VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT,
+        .dstAccessMask = VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+        .oldLayout     = VK_IMAGE_LAYOUT_UNDEFINED,
+        .newLayout     = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+        .image         = state->shadow_map.image,
+        .subresourceRange = {
+            .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
+            .levelCount = 1,
+            .layerCount = 1,
+        },
+    };
+
+    VkDependencyInfo shadow_dep = {
+        .sType                   = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+        .imageMemoryBarrierCount = 1,
+        .pImageMemoryBarriers    = &shadow_to_depth,
+    };
+    vkCmdPipelineBarrier2(frame->command_buffer, &shadow_dep);
+
+    VkRenderingAttachmentInfo shadow_depth_attachment = {
+        .sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+        .imageView   = state->shadow_map.view,
+        .imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+        .loadOp      = VK_ATTACHMENT_LOAD_OP_CLEAR,
+        .storeOp     = VK_ATTACHMENT_STORE_OP_STORE,
+        .clearValue  = { .depthStencil = { .depth = 1.0f, .stencil = 0 } },
+    };
+
+    VkRenderingInfo shadow_rendering = {
+        .sType             = VK_STRUCTURE_TYPE_RENDERING_INFO,
+        .renderArea        = { .offset = { 0, 0 }, .extent = { SHADOW_MAP_SIZE, SHADOW_MAP_SIZE } },
+        .layerCount        = 1,
+        .colorAttachmentCount = 0,
+        .pDepthAttachment  = &shadow_depth_attachment,
+    };
+
+    vkCmdBeginRendering(frame->command_buffer, &shadow_rendering);
+
+    Pipeline *shadow_pipeline = &state->pipelines[PIPELINE_SHADOW_MAP_STATIC];
+    vkCmdBindPipeline(frame->command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, shadow_pipeline->handle);
+
+    vkCmdPushConstants(frame->command_buffer,
+                       shadow_pipeline->layout,
+                       VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+                       0,
+                       sizeof(PushConstants),
+                       &push);
+
+    VkViewport shadow_viewport = {
+        .x = 0.0f, .y = 0.0f,
+        .width    = (float)SHADOW_MAP_SIZE,
+        .height   = (float)SHADOW_MAP_SIZE,
+        .minDepth = 0.0f, .maxDepth = 1.0f,
+    };
+    vkCmdSetViewport(frame->command_buffer, 0, 1, &shadow_viewport);
+
+    VkRect2D shadow_scissor = {
+        .offset = { 0, 0 },
+        .extent = { SHADOW_MAP_SIZE, SHADOW_MAP_SIZE },
+    };
+    vkCmdSetScissor(frame->command_buffer, 0, 1, &shadow_scissor);
+
+    // bind set 0 so the pipeline layout is satisfied (shadow shader doesn't use it)
+    vkCmdBindDescriptorSets(frame->command_buffer,
+                            VK_PIPELINE_BIND_POINT_GRAPHICS,
+                            shadow_pipeline->layout,
+                            0, 1, &state->texture_data.set,
+                            0, NULL);
+
+    vkCmdBindVertexBuffers(frame->command_buffer, 0, 1, &state->mesh_data.buffer, &vertex_offset);
+    vkCmdBindIndexBuffer(frame->command_buffer, state->mesh_data.buffer, index_offset, VK_INDEX_TYPE_UINT32);
+
+    vkCmdDrawIndexedIndirect(frame->command_buffer,
+                             state->scene.draw_buffers[frame_index],
+                             0,
+                             state->scene.draw_count,
+                             sizeof(VkDrawIndexedIndirectCommand));
+
+    vkCmdEndRendering(frame->command_buffer);
+
+    // Transition shadow map to shader-readable for the main pass
+    VkImageMemoryBarrier2 shadow_to_read = {
+        .sType         = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+        .srcStageMask  = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT |
+                         VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT,
+        .srcAccessMask = VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+        .dstStageMask  = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
+        .dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT,
+        .oldLayout     = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+        .newLayout     = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+        .image         = state->shadow_map.image,
+        .subresourceRange = {
+            .aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
+            .levelCount = 1,
+            .layerCount = 1,
+        },
+    };
+
+    shadow_dep.pImageMemoryBarriers = &shadow_to_read;
+    vkCmdPipelineBarrier2(frame->command_buffer, &shadow_dep);
+
+    // --- Main pass ---
+
     VkImageMemoryBarrier2 to_attachment = {
         .sType            = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
         .srcStageMask     = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT,
@@ -110,15 +229,9 @@ void Render(State *state, int frame_index)
     vkCmdBindPipeline(
       frame->command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->handle);
 
-    PushConstants push = {
-        .camera_address = state->camera.camera_buffer_address[frame_index],
-        .scene_address = state->scene.data_addresses[frame_index],
-        .light_address = state->light_data.addresses[frame_index],
-    };
-
     vkCmdPushConstants(frame->command_buffer,
                        pipeline->layout,
-                       VK_SHADER_STAGE_VERTEX_BIT,
+                       VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
                        0,
                        sizeof(PushConstants),
                        &push);
@@ -135,27 +248,26 @@ void Render(State *state, int frame_index)
 
     VkRect2D scissor = {
         .offset = { 0, 0 },
-        .extent = { 
-            state->swapchain.width, 
+        .extent = {
+            state->swapchain.width,
             state->swapchain.height,
         },
     };
     vkCmdSetScissor(frame->command_buffer, 0, 1, &scissor);
 
+    VkDescriptorSet main_sets[] = { state->texture_data.set, state->shadow_map.set };
     vkCmdBindDescriptorSets(frame->command_buffer,
                             VK_PIPELINE_BIND_POINT_GRAPHICS,
                             pipeline->layout,
                             0,
-                            1,
-                            &state->texture_data.set,
+                            2,
+                            main_sets,
                             0,
                             NULL);
 
-    VkDeviceSize vertex_offset = 0;
     vkCmdBindVertexBuffers(
       frame->command_buffer, 0, 1, &state->mesh_data.buffer, &vertex_offset);
 
-    VkDeviceSize index_offset = MEGA_BUFFER_SIZE / 2;
     vkCmdBindIndexBuffer(frame->command_buffer,
                          state->mesh_data.buffer,
                          index_offset,

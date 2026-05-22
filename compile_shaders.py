@@ -76,13 +76,14 @@ def run(cmd: list[str], source: Path) -> bool:
 def spv_path(src: Path) -> Path:
     """Return the output .spv path (same directory as source).
 
-    The output name is just the innermost extension without a leading dot,
-    e.g. src/shaders/shader.vert  ->  src/shaders/vert.spv
-         src/shaders/shader.frag  ->  src/shaders/frag.spv
-         src/shaders/effect.slang ->  src/shaders/slang.spv
+    The output name combines the file stem and stage so multiple shaders of
+    the same type don't collide.
+    e.g. src/shader.vert  ->  src/shader_vert.spv
+         src/shader.frag  ->  src/shader_frag.spv
+         src/shadow.vert  ->  src/shadow_vert.spv
     """
     stage = src.suffix.lstrip(".")   # e.g. "vert", "frag", "hlsl", "slang"
-    return src.parent / f"{stage}.spv"
+    return src.parent / f"{src.stem}_{stage}.spv"
 
 
 # ---------------------------------------------------------------------------

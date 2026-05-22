@@ -7,6 +7,7 @@
 #include "pipeline.cpp"
 #include "render.cpp"
 #include "scene.cpp"
+#include "shadow.cpp"
 #include "swapchain.cpp"
 #include "texture.cpp"
 
@@ -33,6 +34,7 @@ int main()
 
     CreateCameraBuffer(&state);
     CreateLightBuffer(&state);
+    CreateShadowMap(&state);
     CreateSceneBuffers(&state);
     CreateStaticScene(&state);
 
@@ -83,6 +85,7 @@ int main()
                  "reset fence failed");
 
         // OrbitLight(&state, frame_index, total_time);
+        UpdateLightMatrix(&state, frame_index);
         UpdateCamera(&state, dt, frame_index);
         UpdateScene(&state, frame_index);
         Render(&state, frame_index);

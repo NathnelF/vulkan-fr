@@ -1,7 +1,7 @@
 
 cmake_minimum_required(VERSION 3.5...4.0)
 
-project(dx12)
+project(vulkan-fr)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 20)

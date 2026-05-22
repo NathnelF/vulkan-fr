@@ -13,13 +13,14 @@ layout(buffer_reference, scalar) readonly buffer CameraBuffer
 
 layout(buffer_reference, scalar) readonly buffer LightBuffer
 {
-	vec3 direction;
+	vec3  direction;
 	float padding;
-	vec3 color;
+	vec3  color;
 	float ambient_strength;
 	float specular_strength;
 	float shininess;
-	vec2 padding2;
+	vec2  padding2;
+	mat4  light_view_proj;
 };
 
 layout(push_constant) uniform PushConstants
@@ -43,6 +44,7 @@ layout(location = 7) in flat uint in_normal_index;
 layout(location = 0) out vec4 out_color;
 
 layout(set = 0, binding = 0) uniform sampler2D textures[];
+layout(set = 1, binding = 0) uniform sampler2DShadow shadow_map;
 
 void main()
 {
@@ -72,6 +74,12 @@ void main()
 	vec3 reflect_dir = reflect(-light_dir, normal);
 	float spec = pow(max(dot(view_dir, reflect_dir), 0.0), push.light.shininess);
 	vec3 specular = push.light.specular_strength * spec * surface_color;
-	vec3 result = (ambient + diffuse + specular) * surface_color;
+	// Shadow: project fragment into light space and compare depth
+	vec4 light_space    = push.light.light_view_proj * vec4(in_world_position, 1.0);
+	vec3 shadow_coord   = light_space.xyz / light_space.w;
+	shadow_coord.xy     = shadow_coord.xy * 0.5 + 0.5;
+	float shadow        = texture(shadow_map, vec3(shadow_coord.xy, shadow_coord.z));
+
+	vec3 result = (ambient + shadow * (diffuse + specular)) * surface_color;
 	out_color = vec4(result, 1.0);
 }
