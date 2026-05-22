@@ -84,7 +84,7 @@ int main()
         validate(vkResetFences(state.context.device, 1, &frame->fence),
                  "reset fence failed");
 
-        OrbitLight(&state, frame_index, total_time);
+        // OrbitLight(&state, frame_index, total_time);
         UpdateLightMatrix(&state, frame_index);
         UpdateCamera(&state, dt, frame_index);
         UpdateScene(&state, frame_index);

@@ -156,7 +156,7 @@ void UpdateCamera(State *state, float dt, int frame_index)
     HMM_Mat4 proj = HMM_Perspective_RH_ZO(
       HMM_AngleDeg(35.0f), // matching your raylib fovy
       (float)state->swapchain.width / (float)state->swapchain.height,
-      0.1f,
+      0.1f, // near plane
       500.0f);
     proj.Elements[1][1] *= -1.0f;
 

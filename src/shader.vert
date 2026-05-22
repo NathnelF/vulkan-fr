@@ -12,23 +12,23 @@ layout(buffer_reference, scalar) readonly buffer CameraBuffer
 
 struct GpuData
 {
-	mat4 transform;
-	uint mesh_index;
-	uint texture_index;
-	uint ao_index;
-	uint normal_index;
+    mat4 transform;
+    uint mesh_index;
+    uint texture_index;
+    uint ao_index;
+    uint normal_index;
 };
 
 layout(buffer_reference, scalar) readonly buffer SceneBuffer
 {
-	GpuData data[];
+    GpuData data[];
 };
 
 layout(push_constant) uniform PushConstants
 {
-	CameraBuffer camera;
-	SceneBuffer scene;
-	uint64_t light;
+    CameraBuffer camera;
+    SceneBuffer scene;
+    uint64_t light;
 } push;
 
 layout(location = 0) in vec3 pos;
@@ -47,24 +47,24 @@ layout(location = 7) out flat uint out_normal_index;
 
 void main()
 {
-	GpuData entity = push.scene.data[gl_InstanceIndex];
-	vec4 world_position = entity.transform * vec4(pos, 1.0);
-	gl_Position = push.camera.view_proj * world_position;
-	out_world_position = world_position.xyz;
+    GpuData entity = push.scene.data[gl_InstanceIndex];
+    vec4 world_position = entity.transform * vec4(pos, 1.0);
+    gl_Position = push.camera.view_proj * world_position;
+    out_world_position = world_position.xyz;
 
-	mat3 model_mat3 = mat3(entity.transform);
-	mat3 normal_mat = transpose(inverse(model_mat3));
+    mat3 model_mat3 = mat3(entity.transform);
+    mat3 normal_mat = transpose(inverse(model_mat3));
 
-	vec3 T = normalize(model_mat3 * tangent.xyz);
-	vec3 N = normalize(normal_mat * normal);
-	T = normalize(T - dot(T, N) * N);
-	vec3 B = cross(N, T) * tangent.w;
+    vec3 T = normalize(model_mat3 * tangent.xyz);
+    vec3 N = normalize(normal_mat * normal);
+    T = normalize(T - dot(T, N) * N);
+    vec3 B = cross(N, T) * tangent.w;
 
-	out_normal = N;
-	out_uv = uv;
-	out_tangent = T;
-	out_bitangent = B;
-	out_texture_index = entity.texture_index;
-	out_ao_index = entity.ao_index;
-	out_normal_index = entity.normal_index;
+    out_normal = N;
+    out_uv = uv;
+    out_tangent = T;
+    out_bitangent = B;
+    out_texture_index = entity.texture_index;
+    out_ao_index = entity.ao_index;
+    out_normal_index = entity.normal_index;
 }

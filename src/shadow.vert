@@ -6,14 +6,14 @@
 
 layout(buffer_reference, scalar) readonly buffer LightBuffer
 {
-    vec3  direction;
+    vec3 direction;
     float padding;
-    vec3  color;
+    vec3 color;
     float ambient_strength;
     float specular_strength;
     float shininess;
-    vec2  padding2;
-    mat4  light_view_proj;
+    vec2 padding2;
+    mat4 light_view_proj;
 };
 
 struct GpuData
@@ -32,7 +32,7 @@ layout(buffer_reference, scalar) readonly buffer SceneBuffer
 
 layout(push_constant) uniform PushConstants
 {
-    uint64_t   camera;
+    uint64_t camera;
     SceneBuffer scene;
     LightBuffer light;
 } push;
@@ -44,7 +44,8 @@ layout(location = 3) in vec4 tangent;
 
 void main()
 {
-    GpuData entity  = push.scene.data[gl_InstanceIndex];
-    vec4 world_pos  = entity.transform * vec4(pos, 1.0);
-    gl_Position     = push.light.light_view_proj * world_pos;
+    GpuData entity = push.scene.data[gl_InstanceIndex];
+    vec4 world_pos = entity.transform * vec4(pos, 1.0);
+    gl_Position = push.light.light_view_proj * world_pos;
+    gl_Position.z -= 0.005;
 }
