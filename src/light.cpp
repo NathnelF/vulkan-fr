@@ -39,7 +39,7 @@ void CreateLightBuffer(State *state)
         LightData *data = state->light_data.ptrs[i];
         data->direction = HMM_NormV3({ 1.0f, -1.0f, -1.0f });
         data->color = { 1.0f, 1.0f, 1.0f };
-        data->ambient_strength = 0.1f;
+        data->ambient_strength = 0.2f;
         data->specular_strength = 0.5;
         data->shininess = 32.0f;
     };
@@ -65,7 +65,7 @@ void UpdateLightMatrix(State *state, u32 frame_index)
 
     HMM_Mat4 view = HMM_LookAt_RH(eye, scene_center, up);
     HMM_Mat4 proj =
-      HMM_Orthographic_RH_ZO(-65.0f, 65.0f, -65.0f, 65.0f, 0.1f, 500.0f);
+      HMM_Orthographic_RH_ZO(-65.0f, 65.0f, -65.0f, 65.0f, 1.0f, 175.0f);
     proj.Elements[1][1] *= -1.0f;
 
     data->light_view_proj = HMM_MulM4(proj, view);

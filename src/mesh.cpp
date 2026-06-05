@@ -75,6 +75,11 @@ u32 LoadMesh(State *state, RawMesh *output, const char *path)
             case cgltf_attribute_type_position:
             {
                 position_accessor = primitive->attributes[i].data;
+                if (position_accessor->has_min && position_accessor->has_max)
+                    debug("%s Y extent: [%.4f, %.4f]",
+                          path,
+                          position_accessor->min[1],
+                          position_accessor->max[1]);
                 break;
             }
             case cgltf_attribute_type_normal:

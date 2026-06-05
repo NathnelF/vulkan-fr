@@ -47,5 +47,4 @@ void main()
     GpuData entity = push.scene.data[gl_InstanceIndex];
     vec4 world_pos = entity.transform * vec4(pos, 1.0);
     gl_Position = push.light.light_view_proj * world_pos;
-    gl_Position.z -= 0.005;
 }

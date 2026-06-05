@@ -224,6 +224,9 @@ Pipeline BuildPipeline(State *state, PipelineDesc *desc)
         .polygonMode = VK_POLYGON_MODE_FILL,
         .cullMode = desc->cull_mode,
         .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+        .depthBiasEnable = desc->depth_bias ? VK_TRUE : VK_FALSE,
+        .depthBiasConstantFactor = desc->depth_bias ? 0.0f : 0.0f,
+        .depthBiasSlopeFactor = desc->depth_bias ? 3.0f : 0.0f,
         .lineWidth = 1.0f,
     };
 
@@ -372,15 +375,18 @@ void LoadAllPipelines(State *state)
     basic_desc.layout = standard_pipeline_layout;
     state->pipelines[PIPELINE_BASIC] = BuildPipeline(state, &basic_desc);
 
-    // build shadow map pipeline (depth-only, front-face cull to reduce peter-panning)
+    // build shadow map pipeline (depth-only, front-face cull to reduce
+    // peter-panning)
     PipelineDesc shadow_desc = DefaultPipelineDesc(state);
     VkShaderModule shadow_vert = LoadShaderModule(state, "src/shadow_vert.spv");
     shadow_desc.vert = shadow_vert;
     shadow_desc.frag = VK_NULL_HANDLE;
     shadow_desc.depth = DEPTH_READ_WRITE;
-    shadow_desc.cull_mode = VK_CULL_MODE_FRONT_BIT;
+    shadow_desc.cull_mode = VK_CULL_MODE_NONE;
     shadow_desc.depth_format = VK_FORMAT_D32_SFLOAT;
+    shadow_desc.depth_bias = true;
     shadow_desc.stencil_format = VK_FORMAT_UNDEFINED;
     shadow_desc.layout = standard_pipeline_layout;
-    state->pipelines[PIPELINE_SHADOW_MAP_STATIC] = BuildPipeline(state, &shadow_desc);
+    state->pipelines[PIPELINE_SHADOW_MAP_STATIC] =
+      BuildPipeline(state, &shadow_desc);
 }

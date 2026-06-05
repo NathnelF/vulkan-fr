@@ -74,11 +74,17 @@ void main()
 	vec3 reflect_dir = reflect(-light_dir, normal);
 	float spec = pow(max(dot(view_dir, reflect_dir), 0.0), push.light.shininess);
 	vec3 specular = push.light.specular_strength * spec * surface_color;
-	// Shadow: project fragment into light space and compare depth
-	vec4 light_space    = push.light.light_view_proj * vec4(in_world_position, 1.0);
-	vec3 shadow_coord   = light_space.xyz / light_space.w;
-	shadow_coord.xy     = shadow_coord.xy * 0.5 + 0.5;
-	float shadow        = texture(shadow_map, vec3(shadow_coord.xy, shadow_coord.z));
+	// Shadow: project fragment into light space, then 3x3 PCF
+	vec4 light_space  = push.light.light_view_proj * vec4(in_world_position, 1.0);
+	vec3 shadow_coord = light_space.xyz / light_space.w;
+	shadow_coord.xy   = shadow_coord.xy * 0.5 + 0.5;
+
+	float texel = 1.0 / float(2048);
+	float shadow = 0.0;
+	for (int x = -2; x <= 2; x++)
+	    for (int y = -2; y <= 2; y++)
+	        shadow += texture(shadow_map, vec3(shadow_coord.xy + vec2(x, y) * texel, shadow_coord.z));
+	shadow /= 25.0;
 
 	vec3 result = (ambient + shadow * (diffuse + specular)) * surface_color;
 	out_color = vec4(result, 1.0);

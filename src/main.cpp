@@ -28,9 +28,14 @@ int main()
           stats.total.statistics.allocationBytes / (1024 * 1024));
     CreateTexturePool(&state);
     // TODO(Nate): move texture loads to scene creation
-    LoadTexture(&state, "assets/bricks_albedo.png");
-    LoadTexture(&state, "assets/bricks_ao.png");
-    LoadTexture(&state, "assets/bricks_normal.png");
+    LoadTexture(&state, "assets/bricks_albedo.png"); // 0
+    LoadTexture(&state, "assets/bricks_ao.png");     // 1
+    LoadTexture(&state, "assets/bricks_normal.png"); // 2
+    // default flat textures for surfaces without materials
+    LoadSolidTexture(&state, 255, 0, 0, 255);     // 3: white albedo
+    LoadSolidTexture(&state, 255, 255, 255, 255); // 4: white AO
+    LoadSolidTexture(
+      &state, 128, 128, 255, 255, VK_FORMAT_R8G8B8A8_UNORM); // 5: flat normal
 
     CreateCameraBuffer(&state);
     CreateLightBuffer(&state);

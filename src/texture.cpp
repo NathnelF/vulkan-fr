@@ -338,4 +338,194 @@ u32 LoadTexture(State *state, const char *path)
     return texture.index;
 }
 
+u32 LoadSolidTexture(State *state, u8 r, u8 g, u8 b, u8 a, VkFormat format = VK_FORMAT_R8G8B8A8_SRGB)
+{
+    u8 pixels[4] = { r, g, b, a };
+
+    VkBufferCreateInfo staging_info = {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .size  = 4,
+        .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+    };
+
+    VmaAllocationCreateInfo staging_alloc_info = {
+        .flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+                 VMA_ALLOCATION_CREATE_MAPPED_BIT,
+        .usage = VMA_MEMORY_USAGE_AUTO,
+    };
+
+    VkBuffer staging_buffer;
+    VmaAllocation staging_alloc;
+    VmaAllocationInfo staging_result = {};
+
+    validate(vmaCreateBuffer(state->context.allocator,
+                             &staging_info,
+                             &staging_alloc_info,
+                             &staging_buffer,
+                             &staging_alloc,
+                             &staging_result),
+             "could not create staging buffer for solid texture");
+
+    memcpy(staging_result.pMappedData, pixels, 4);
+
+    VkImageCreateInfo image_info = {
+        .sType       = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+        .imageType   = VK_IMAGE_TYPE_2D,
+        .format      = format,
+        .extent      = { 1, 1, 1 },
+        .mipLevels   = 1,
+        .arrayLayers = 1,
+        .samples     = VK_SAMPLE_COUNT_1_BIT,
+        .tiling      = VK_IMAGE_TILING_OPTIMAL,
+        .usage       = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+    };
+
+    VmaAllocationCreateInfo image_alloc_info = {
+        .flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT,
+        .usage = VMA_MEMORY_USAGE_AUTO,
+    };
+
+    Texture texture = {};
+
+    validate(vmaCreateImage(state->context.allocator,
+                            &image_info,
+                            &image_alloc_info,
+                            &texture.image,
+                            &texture.allocation,
+                            NULL),
+             "could not create solid texture image");
+
+    VkCommandBufferAllocateInfo buffer_alloc = {
+        .sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+        .commandPool        = state->context.frame_context[0].command_pool,
+        .level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+        .commandBufferCount = 1,
+    };
+
+    VkCommandBuffer cmd;
+    validate(vkAllocateCommandBuffers(state->context.device, &buffer_alloc, &cmd),
+             "could not allocate command buffer for solid texture");
+
+    VkCommandBufferBeginInfo begin_info = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+        .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+    };
+    vkBeginCommandBuffer(cmd, &begin_info);
+
+    VkImageMemoryBarrier2 to_transfer = {
+        .sType         = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+        .srcStageMask  = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT,
+        .srcAccessMask = 0,
+        .dstStageMask  = VK_PIPELINE_STAGE_2_COPY_BIT,
+        .dstAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+        .oldLayout     = VK_IMAGE_LAYOUT_UNDEFINED,
+        .newLayout     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        .image         = texture.image,
+        .subresourceRange = {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .levelCount = 1,
+            .layerCount = 1,
+        },
+    };
+
+    VkDependencyInfo dep_info = {
+        .sType                   = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+        .imageMemoryBarrierCount = 1,
+        .pImageMemoryBarriers    = &to_transfer,
+    };
+    vkCmdPipelineBarrier2(cmd, &dep_info);
+
+    VkBufferImageCopy2 copy_region = {
+        .sType            = VK_STRUCTURE_TYPE_BUFFER_IMAGE_COPY_2,
+        .imageSubresource = { .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .layerCount = 1 },
+        .imageExtent      = { 1, 1, 1 },
+    };
+
+    VkCopyBufferToImageInfo2 copy_info = {
+        .sType          = VK_STRUCTURE_TYPE_COPY_BUFFER_TO_IMAGE_INFO_2,
+        .srcBuffer      = staging_buffer,
+        .dstImage       = texture.image,
+        .dstImageLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        .regionCount    = 1,
+        .pRegions       = &copy_region,
+    };
+    vkCmdCopyBufferToImage2(cmd, &copy_info);
+
+    VkImageMemoryBarrier2 to_shader_read = {
+        .sType         = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+        .srcStageMask  = VK_PIPELINE_STAGE_2_COPY_BIT,
+        .srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT,
+        .dstStageMask  = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
+        .dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT,
+        .oldLayout     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        .newLayout     = VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL,
+        .image         = texture.image,
+        .subresourceRange = {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .levelCount = 1,
+            .layerCount = 1,
+        },
+    };
+
+    dep_info.pImageMemoryBarriers = &to_shader_read;
+    vkCmdPipelineBarrier2(cmd, &dep_info);
+    vkEndCommandBuffer(cmd);
+
+    VkFenceCreateInfo fence_info = { .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
+    VkFence fence;
+    validate(vkCreateFence(state->context.device, &fence_info, NULL, &fence),
+             "could not create fence for solid texture upload");
+
+    VkSubmitInfo submit_info = {
+        .sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+        .commandBufferCount = 1,
+        .pCommandBuffers    = &cmd,
+    };
+    validate(vkQueueSubmit(state->context.queue, 1, &submit_info, fence),
+             "could not submit solid texture upload");
+
+    vkWaitForFences(state->context.device, 1, &fence, VK_TRUE, UINT64_MAX);
+    vkDestroyFence(state->context.device, fence, NULL);
+    vkFreeCommandBuffers(state->context.device,
+                         state->context.frame_context[0].command_pool, 1, &cmd);
+    vmaDestroyBuffer(state->context.allocator, staging_buffer, staging_alloc);
+
+    VkImageViewCreateInfo view_info = {
+        .sType    = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .image    = texture.image,
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format   = format,
+        .subresourceRange = {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .levelCount = 1,
+            .layerCount = 1,
+        },
+    };
+    validate(vkCreateImageView(state->context.device, &view_info, NULL, &texture.view),
+             "could not create solid texture image view");
+
+    texture.index = state->texture_data.count++;
+
+    VkDescriptorImageInfo image_descriptor = {
+        .sampler     = state->texture_data.sampler,
+        .imageView   = texture.view,
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+    };
+
+    VkWriteDescriptorSet write = {
+        .sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstSet          = state->texture_data.set,
+        .dstBinding      = 0,
+        .dstArrayElement = texture.index,
+        .descriptorCount = 1,
+        .descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .pImageInfo      = &image_descriptor,
+    };
+    vkUpdateDescriptorSets(state->context.device, 1, &write, 0, NULL);
+
+    debug("created solid texture (%u,%u,%u,%u) at slot %u", r, g, b, a, texture.index);
+    return texture.index;
+}
+
 void LoadTextures(State *state) {}

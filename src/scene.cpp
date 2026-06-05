@@ -165,9 +165,12 @@ void CreateStaticScene(State *state)
     //           2);
     //     }
     // }
-    AddMeshToScene(&state->scene, { 0.0f, 0.0f, 0.0f }, 1, 0, 1, 2);
+    //
+    float ground = 0.0f;
+    float object_level = ground + 1.0f;
+    AddMeshToScene(&state->scene, { 0.0f, ground, 0.0f }, 1, 3, 4, 5);
     // // initially let's draw three cubes
-    AddMeshToScene(&state->scene, { 0.0f, 1.0f, 0.0f }, 0, 0, 1, 2);
-    AddMeshToScene(&state->scene, { -6.0f, 1.0f, 0.0f }, 0, 0, 1, 2);
-    AddMeshToScene(&state->scene, { 6.0f, 1.0f, 0.0f }, 0, 0, 1, 2);
+    AddMeshToScene(&state->scene, { 0.0f, object_level, 0.0f }, 0, 0, 1, 2);
+    AddMeshToScene(&state->scene, { -6.0f, object_level, 0.0f }, 0, 0, 1, 2);
+    AddMeshToScene(&state->scene, { 6.0f, object_level, 0.0f }, 0, 0, 1, 2);
 }

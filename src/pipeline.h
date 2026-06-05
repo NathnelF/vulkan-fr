@@ -41,6 +41,8 @@ struct PipelineDesc
 
     VkSampleCountFlagBits samples;
 
+    bool depth_bias;
+
     VkPipelineLayout layout;
 };
 
